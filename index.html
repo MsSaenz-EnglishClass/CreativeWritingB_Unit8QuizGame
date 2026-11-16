@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Writers' Room — Unit 8 Team Challenge</title>
+<style>
+  :root{
+    --field:#0E1628;
+    --panel:#18233F;
+    --panel-2:#22304F;
+    --slide:#F4F7FD;
+    --paper:#E9EEF9;
+    --muted:#93A0C0;
+    --teal:#2DB3C6;
+    --coral:#FF6F62;
+    --gold:#F5B740;
+    --mint:#4FD18B;
+    --rose:#FF5F6D;
+    --line:rgba(255,255,255,.10);
+    --ui:"Segoe UI",Roboto,-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;
+    --spec:Georgia,"Times New Roman",serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{background:var(--field);color:var(--paper);font-family:var(--ui);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1240px;margin:0 auto;padding:16px 20px 40px}
+  button{font:inherit}
+
+  .board-top{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;margin-bottom:16px}
+  .team{flex:1 1 150px;background:var(--panel);border:1px solid var(--line);
+    border-radius:13px;padding:11px 13px;position:relative;min-width:130px}
+  .team.up{border-color:var(--gold);box-shadow:0 0 0 2px rgba(245,183,64,.3)}
+  .team-name{font-size:12.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+    display:flex;align-items:center;gap:7px;margin-bottom:5px}
+  .pip{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+  .team-score{font-family:var(--spec);font-size:32px;line-height:1;color:#fff}
+  .team-adj{position:absolute;top:9px;right:9px;display:flex;gap:3px;opacity:.5}
+  .team:hover .team-adj{opacity:1}
+  .team-adj button{background:rgba(255,255,255,.08);border:0;color:var(--paper);width:22px;height:22px;
+    border-radius:6px;cursor:pointer;line-height:1;font-size:13px}
+  .team-adj button:hover{background:rgba(255,255,255,.2)}
+  .turn-tag{position:absolute;bottom:9px;right:11px;font-size:10px;font-weight:800;
+    letter-spacing:.1em;color:var(--gold)}
+
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+  .cat{background:var(--panel-2);border-radius:11px;padding:13px 9px;text-align:center;
+    font-size:12.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+    color:#fff;line-height:1.3;display:flex;align-items:center;justify-content:center;min-height:60px}
+  .cell{background:var(--panel);border:1px solid var(--line);border-radius:11px;
+    padding:20px 8px;color:var(--teal);font-family:var(--spec);font-size:27px;
+    cursor:pointer;transition:transform .12s ease,background .12s ease}
+  .cell:hover:not(:disabled){transform:translateY(-3px);background:var(--panel-2)}
+  .cell:disabled{opacity:.2;cursor:default;color:var(--muted)}
+  .cell:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+
+  .barrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:18px 0 4px}
+  .hint{color:var(--muted);font-size:13px}
+
+  .qhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .qcat{font-size:12.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
+  .qval{font-family:var(--spec);font-size:26px;color:var(--gold)}
+  .qturn{margin-left:auto;font-size:13px;font-weight:700;color:var(--paper);
+    background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:6px 14px;
+    display:flex;align-items:center;gap:8px}
+  .timer{height:6px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden;margin-bottom:16px}
+  .timer-fill{height:100%;background:var(--gold);width:100%;border-radius:99px}
+  .timer-fill.low{background:var(--rose)}
+
+  .specimen{background:var(--slide);color:#131C33;border-radius:18px;
+    padding:34px 32px;box-shadow:0 18px 44px rgba(0,0,0,.36)}
+  .ask{font-size:13px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;
+    color:#5A6480;margin-bottom:14px}
+  .sentence{font-family:var(--spec);font-size:clamp(20px,2.9vw,33px);line-height:1.55}
+  .tok{padding:1px 4px;border-radius:6px}
+  .tok.hit{background:var(--mint);color:#0B2A1B;font-weight:700}
+  .gap{display:inline-block;min-width:1.1em;border-bottom:4px solid var(--coral);
+    color:var(--coral);font-weight:700}
+  .clue-note{margin-top:10px;font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#1D7A55}
+
+  .choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
+  .choice{display:flex;gap:12px;align-items:center;background:#fff;border:2px solid rgba(19,28,51,.12);
+    border-radius:12px;padding:12px 16px;font-size:clamp(16px,1.9vw,20px);font-weight:600;color:#131C33;line-height:1.35}
+  .choice .letter{width:30px;height:30px;border-radius:8px;background:#131C33;color:#fff;
+    display:grid;place-items:center;font-weight:800;flex:0 0 auto;font-size:15px}
+  .choice.right{border-color:var(--mint);background:#E3F8EC}
+  .choice.right .letter{background:#1D7A55}
+  .choice.wrong{opacity:.38}
+
+  .answer{margin-top:24px;padding-top:20px;border-top:2px solid rgba(19,28,51,.12)}
+  .answer-label{font-size:12.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;
+    color:#1D7A55;margin-bottom:8px}
+  .answer-text{font-size:clamp(19px,2.6vw,27px);font-weight:700;color:#131C33;line-height:1.4}
+  .answer-why{margin-top:12px;font-size:16.5px;line-height:1.55;color:#3B455F}
+  .answer-why b{color:#131C33}
+
+  .award{margin-top:20px}
+  .award-lead{font-size:13px;color:var(--muted);margin-bottom:10px;display:flex;
+    align-items:center;gap:14px;flex-wrap:wrap}
+  .chiprow{display:flex;gap:9px;flex-wrap:wrap}
+  .chip{border:0;border-radius:11px;padding:13px 18px;font-size:15px;font-weight:800;
+    color:#0E1628;cursor:pointer}
+  .chip:hover{filter:brightness(1.1)}
+  .chip:focus-visible{outline:3px solid #fff;outline-offset:2px}
+  .chip.none{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
+  .toggle{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;color:var(--paper)}
+  .toggle input{width:17px;height:17px;accent-color:var(--gold)}
+
+  .btn{background:var(--teal);color:#04202A;border:0;border-radius:11px;
+    padding:13px 24px;font-size:15.5px;font-weight:800;cursor:pointer}
+  .btn:hover{filter:brightness(1.08)}
+  .btn:focus-visible{outline:3px solid #fff;outline-offset:2px}
+  .btn.ghost{background:none;border:1px solid var(--line);color:var(--paper)}
+  .btn.gold{background:var(--gold);color:#3B2A05}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}
+
+  .hero h1{font-family:var(--spec);font-size:clamp(32px,6vw,48px);margin:8px 0 8px;
+    font-weight:400;color:#fff}
+  .hero h1 em{font-style:italic;color:var(--teal)}
+  .hero p{color:var(--muted);font-size:16px;line-height:1.55;max-width:62ch;margin:0 0 24px}
+  .setup-card{background:var(--panel);border:1px solid var(--line);border-radius:15px;
+    padding:20px;margin-bottom:14px}
+  .setup-card h2{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);margin:0 0 14px}
+  .teamedit{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+  .teamedit input{flex:1;background:var(--field);border:1px solid var(--line);border-radius:9px;
+    padding:11px 13px;color:#fff;font-size:15px}
+  .teamedit input:focus{outline:2px solid var(--teal);outline-offset:0}
+  .kill{background:none;border:0;color:var(--muted);cursor:pointer;font-size:19px;padding:4px 8px;border-radius:7px}
+  .kill:hover{color:var(--rose);background:rgba(255,95,109,.12)}
+  .seg{display:flex;gap:7px;flex-wrap:wrap}
+  .seg button{background:var(--field);border:1px solid var(--line);color:var(--paper);
+    border-radius:9px;padding:9px 15px;font-size:14px;cursor:pointer}
+  .seg button.on{background:var(--teal);color:#04202A;border-color:var(--teal);font-weight:800}
+  .rules{color:var(--muted);font-size:14px;line-height:1.7}
+  .rules b{color:var(--paper)}
+
+  .gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px 18px}
+  .gloss div{font-size:14px;line-height:1.45;color:var(--muted);padding:7px 0;border-bottom:1px solid var(--line)}
+  .gloss b{color:#fff;display:block;font-size:14.5px}
+  details.wordbank{margin-top:16px}
+  details.wordbank summary{cursor:pointer;font-size:13px;font-weight:800;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--teal);list-style:none}
+  details.wordbank summary::-webkit-details-marker{display:none}
+  details.wordbank summary::before{content:"\25B8  "}
+  details.wordbank[open] summary::before{content:"\25BE  "}
+  details.wordbank[open] summary{margin-bottom:14px}
+
+  .wagerrow{display:flex;align-items:center;gap:11px;margin-bottom:10px;flex-wrap:wrap}
+  .wagerrow input{width:130px;background:var(--field);border:1px solid var(--line);border-radius:9px;
+    padding:10px 12px;color:#fff;font-size:16px}
+  .wagername{font-weight:800;font-size:14px;display:flex;align-items:center;gap:8px;min-width:150px}
+  .verdict{display:flex;gap:6px}
+  .verdict button{border:1px solid var(--line);background:var(--panel);color:var(--paper);
+    border-radius:8px;padding:8px 13px;cursor:pointer;font-size:13.5px;font-weight:700}
+  .verdict button.yes.on{background:var(--mint);color:#0B2A1B;border-color:var(--mint)}
+  .verdict button.no.on{background:var(--rose);color:#fff;border-color:var(--rose)}
+
+  .podium{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:24px 0}
+  .place{background:var(--panel);border:1px solid var(--line);border-radius:15px;
+    padding:20px 26px;text-align:center;min-width:170px}
+  .place.first{border-color:var(--gold);box-shadow:0 0 0 2px rgba(245,183,64,.28)}
+  .place-rank{font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:800}
+  .place-name{font-size:17px;font-weight:800;margin:7px 0 5px;color:#fff}
+  .place-score{font-family:var(--spec);font-size:34px;color:var(--gold)}
+
+  @media (prefers-reduced-motion: reduce){*{transition-duration:.001ms !important}}
+  @media (max-width:820px){
+    .grid{gap:5px}
+    .cell{padding:13px 3px;font-size:18px}
+    .cat{font-size:9.5px;padding:9px 4px;min-height:48px}
+    .specimen{padding:24px 18px}
+    .choices{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap"><div id="view"></div></div>
+
+<script>
+/* Storage shim: survives an accidental refresh mid-game. */
+const mem = {};
+const Store = {
+  async get(k){
+    try{ if(window.storage){ const r = await window.storage.get(k); return r ? r.value : null; } }catch(e){}
+    try{ const v = localStorage.getItem(k); if(v !== null) return v; }catch(e){}
+    return mem[k] ?? null;
+  },
+  async set(k,v){
+    mem[k] = v;
+    try{ if(window.storage){ await window.storage.set(k,v); return; } }catch(e){}
+    try{ localStorage.setItem(k,v); }catch(e){}
+  }
+};
+const KEY = "writers-room-unit8-v1";
+
+/* ============================================================
+   Key vocabulary — Unit 8 slide deck, slides 3–6.
+   ============================================================ */
+const GLOSSARY = [
+  ["academic writers","those who create content for education-related projects"],
+  ["article writers","those who create short pieces on a variety of topics"],
+  ["business writers","those who write for publications related to business or finance"],
+  ["columnists","writers who regularly use their personal voice to comment on trends, issues, or ideas"],
+  ["copywriters","writers who design content around selling a certain product"],
+  ["critique","critically evaluate"],
+  ["freelance writers","writers for hire who will write in many different capacities"],
+  ["ghostwriters","people who write anonymously to support someone writing a book"],
+  ["grant writers","people who use specialized knowledge and structure to write legal documents for institutions"],
+  ["journalists","those who write regularly for publications on a variety of issues"],
+  ["novelists","authors who write books or long narratives"],
+  ["playwright","someone who writes plays: stories told mostly through dialogue for actors to perform on stage"],
+  ["poets","people who write poems"],
+  ["proofreading","the act of reading through writing with a critical eye for revision"],
+  ["query letter","a short, professional letter that pitches your work to an editor; writing one is the best first step to engaging an editor"],
+  ["realism","the quality of feeling true to life; characters’ intentions and motivations are believable, so readers keep caring"],
+  ["resonance","reverberation of the message"],
+  ["revision","alteration in language"],
+  ["rough draft","the first version of a written document"],
+  ["technical writing","writing that explains how to use or operate something, such as manuals and step-by-step instructions"]
+];
+
+/* ============================================================
+   Board content. [brackets] = clue words that light up on reveal.
+   choices + correct (index) = lettered options; omit for open answers.
+   ============================================================ */
+const CATS = [
+  {name:"Who Writes This?", qs:[
+    {v:100, text:"Dario writes [practice tests] and [lesson guides] for a company that makes [school textbooks].",
+     ask:"What kind of writer is Dario?",
+     choices:["business writer","copywriter","academic writer","novelist"], correct:2,
+     answer:"Academic writer",
+     why:"Academic writers create content for <b>education-related projects</b>. Tests, lessons, and textbooks are all built for school."},
+    {v:200, text:"Priya writes catchy slogans and product descriptions to help a sneaker brand [sell] its [new shoe].",
+     ask:"What kind of writer is Priya?",
+     choices:["journalist","copywriter","grant writer","columnist"], correct:1,
+     answer:"Copywriter",
+     why:"Copywriters design content around <b>selling a certain product</b>. If the goal of the writing is “buy this,” think copywriting."},
+    {v:300, text:"Every Sunday, Malik’s [opinion piece] runs in the city paper. Readers recognize his [personal voice] instantly as he [comments on trends] in teen culture.",
+     ask:"What is Malik’s job title?",
+     choices:["article writer","journalist","columnist","ghostwriter"], correct:2,
+     answer:"Columnist",
+     why:"Columnists <b>regularly</b> use their <b>personal voice</b> to <b>comment on trends, issues, or ideas</b>. Journalists also write regularly, but the opinion and personal voice are the giveaway here."},
+    {v:400, text:"Tessa covers [stock prices], [company earnings], and [interest rates] for a monthly [finance] magazine.",
+     ask:"What kind of writer is Tessa?",
+     choices:["academic writer","freelance writer","poet","business writer"], correct:3,
+     answer:"Business writer",
+     why:"Business writers write for <b>publications related to business or finance</b>. Money topics + a finance magazine = business writing."},
+    {v:500, text:"This week Jonah turned in a [short piece] on sleep science, another on skate parks, and a third on budget travel. Next week? A [whole new set of topics].",
+     ask:"What kind of writer is Jonah?",
+     choices:["novelist","article writer","columnist","academic writer"], correct:1,
+     answer:"Article writer",
+     why:"Article writers create <b>short pieces on a variety of topics</b>. He isn’t giving his opinion (columnist) or writing for school (academic) — he’s jumping between short, informative pieces."}
+  ]},
+  {name:"Pen for Hire", qs:[
+    {v:100, text:"Ava has spent two years writing a [400-page] story about a family that moves to Mars. She hopes to see it [on bookstore shelves] someday.",
+     ask:"What kind of writer is Ava?",
+     choices:["poet","columnist","novelist","copywriter"], correct:2,
+     answer:"Novelist",
+     why:"Novelists are authors who write <b>books or long narratives</b>. Four hundred pages of story is about as long as narratives get."},
+    {v:200, text:"A pro athlete’s memoir hits the bestseller list with his name on the cover. But Rosa actually wrote most of it — and [her name appears nowhere].",
+     ask:"What is Rosa’s role?",
+     choices:["ghostwriter","freelance writer","journalist","academic writer"], correct:0,
+     answer:"Ghostwriter",
+     why:"Ghostwriters write <b>anonymously</b> to support someone else’s book. Like a ghost, the reader never sees them."},
+    {v:300, text:"This month Kai wrote a bakery’s website, a best-man speech, and a gym newsletter. Clients [hire him by the job], and he’ll write [just about anything].",
+     ask:"What kind of writer is Kai?",
+     choices:["business writer","freelance writer","poet","columnist"], correct:1,
+     answer:"Freelance writer",
+     why:"Freelance writers are <b>writers for hire</b> who work in <b>many different capacities</b>. No single topic, no single employer."},
+    {v:400, text:"A children’s hospital brings in Lena because she has the [specialized knowledge] and knows the [exact structure] its formal documents for [institutions] need to follow.",
+     ask:"What kind of writer is Lena?",
+     choices:["copywriter","ghostwriter","grant writer","article writer"], correct:2,
+     answer:"Grant writer",
+     why:"Grant writers use <b>specialized knowledge and structure</b> to write formal, legal documents for <b>institutions</b>. Watch for the words <b>structure</b> and <b>institution</b>."},
+    {v:500, text:"Ben’s pages are almost entirely [characters talking to each other], with a few notes like “(She slams the door.)” in between. Actors will [perform it on a stage].",
+     ask:"Who most likely wrote Ben’s pages?",
+     choices:["a journalist","a grant writer","a playwright","a columnist"], correct:2,
+     answer:"A playwright",
+     why:"A <b>playwright</b> is <b>someone who writes plays</b>, and plays tell almost the whole story through <b>dialogue</b> for actors to perform. Novelists use some dialogue too, but a script meant for the stage belongs to a playwright."}
+  ]},
+  {name:"Draft to Done", qs:[
+    {v:100, text:"Nia’s essay is the [very first version]: messy, full of margin notes, and still missing an ending.",
+     ask:"What is this version called?",
+     choices:["final draft","query letter","rough draft","resonance"], correct:2,
+     answer:"Rough draft",
+     why:"A rough draft is <b>the first version of a written document</b>. It’s supposed to be messy — that’s what revision is for."},
+    {v:200, text:"In writing workshop, students [critically evaluate] each other’s short stories, explaining what works and what doesn’t.",
+     ask:"What are the students doing?",
+     choices:["brainstorming","critiquing","ghostwriting","drafting"], correct:1,
+     answer:"Critiquing (giving a critique)",
+     why:"To critique is to <b>critically evaluate</b> a piece of writing. It’s judgment and feedback, not rewriting."},
+    {v:300, text:"Before turning in his poem, Omar [reads through it] line by line with a [critical eye], hunting for anything that needs fixing.",
+     ask:"What is Omar doing?",
+     choices:["proofreading","publishing","brainstorming","ghostwriting"], correct:0,
+     answer:"Proofreading",
+     why:"In this unit, proofreading means <b>reading through writing with a critical eye for revision</b>. Clue words: <b>reads through</b> + <b>critical eye</b> + looking for things to fix."},
+    {v:400, text:"Grace [changes] “The dog was big” [to] “The mastiff loomed over the fence.”",
+     ask:"Which key term describes what Grace just did?",
+     choices:["critique","resonance","revision","rough draft"], correct:2,
+     answer:"Revision",
+     why:"Revision is an <b>alteration in language</b>. Grace didn’t judge the sentence — she actually changed the words."},
+    {v:500, text:"Weeks after finishing the novel, readers are [still thinking] about its message. It keeps [echoing] in their heads.",
+     ask:"Which key term names that lasting effect?",
+     choices:["revision","proofreading","resonance","critique"], correct:2,
+     answer:"Resonance",
+     why:"Resonance is the <b>reverberation of the message</b> — when a piece keeps echoing with the reader long after the last page."}
+  ]},
+  {name:"Revision Moves", qs:[
+    {v:100, text:"Leo just finished a short story. His mentor says, “[Put it in a drawer for a week] before you revise it.”",
+     ask:"What is the MAIN benefit of stepping away?",
+     choices:["Leo can forget the story ever happened","Leo can come back with fresh eyes","Someone else can finish it","Leo can start a brand-new topic"], correct:1,
+     answer:"He comes back with fresh eyes",
+     why:"Getting <b>distance</b> from a draft lets you read it more objectively, almost like a stranger would. Mistakes you were blind to suddenly jump out."},
+    {v:200, text:"Before revising her speech, Camila [reads the whole thing out loud] to her bedroom wall.",
+     ask:"What is this MOST likely to help her catch?",
+     choices:["clunky sentences and awkward rhythm","the best font for the page","the price of printing","nothing — it just wastes time"], correct:0,
+     answer:"Clunky sentences and awkward rhythm",
+     why:"Your ear catches what your eye skims past. If you trip over a sentence while <b>reading aloud</b>, a reader will trip over it too."},
+    {v:300, text:"Andre is revising his novel. He keeps asking: [Is the plot in the right order?] [Does the middle drag?] [Should chapter 3 come first?]",
+     ask:"Which revision approach is Andre using?",
+     choices:["sentence-level editing","being honest","thinking big","getting distance"], correct:2,
+     answer:"Thinking big",
+     why:"Questions about <b>structure</b> — order, pacing, what goes where — are big-picture revision. Fixing word choice comes later."},
+    {v:400, text:"Ivy’s teacher writes on her story: “Revise this [at the sentence level].”",
+     ask:"Which change does her teacher MOST likely want?",
+     choices:["Cut a whole character","Change the story’s theme","Swap “went” for a precise, forceful verb like “stormed”","Rewrite the ending"], correct:2,
+     answer:"Swap in a precise, forceful verb",
+     why:"Sentence-level revision zooms in: <b>forceful verbs</b>, <b>precise word choice</b>, and <b>sentence variety</b>. Theme, characters, and endings are big-picture changes."},
+    {v:500, text:"Revising a 300-page manuscript, a writer [prints it out] and marks it up with a red pen instead of scrolling on her laptop.",
+     ask:"Why might this help?",
+     choices:["Paper fixes spelling automatically","A new format helps her spot problems she skimmed past on screen","Publishers will not read anything typed","Handwriting is faster than typing"], correct:1,
+     answer:"A new format helps her spot what she skimmed past",
+     why:"Seeing your work in a <b>different format</b> (a printed copy) tricks your brain into reading it fresh, so errors stand out."}
+  ]},
+  {name:"Curveballs", qs:[
+    {v:100, text:"Maya writes poems [just for fun]. Her cousin writes ad copy [for a living].",
+     ask:"True or false: only the cousin’s writing will ever reach a final, finished stage.",
+     choices:["True","False"], correct:1,
+     answer:"False",
+     why:"Whether you write as a hobby or as a career, your work usually moves toward a <b>final phase</b> of some kind — shared, submitted, published, or simply finished."},
+    {v:200, text:"While critiquing her own mystery novel, Rae checks every character for [realism]: are their [intentions and motivations believable]?",
+     ask:"Which character detail would MOST likely fail Rae’s realism check?",
+     choices:["A nervous new nurse double-checks every dose","A lifeguard ignores a swimmer yelling for help so he can finish a crossword, for no reason at all","A tired student dozes off in class after working a late shift","A shy kid rehearses a speech in the mirror"], correct:1,
+     answer:"The lifeguard who ignores a swimmer for no reason",
+     why:"<b>Realism</b> means the story feels true to life, with characters whose <b>intentions and motivations are believable</b>. A lifeguard who ignores someone in danger with no reason makes no sense, and readers who stop believing a character may stop caring about the story."},
+    {v:300, text:"An editor is coaching a writer through revisions on a [nonfiction] book about the Apollo moon landings.",
+     ask:"Which tip is LEAST likely to come from the editor?",
+     choices:["“Read it as if you’re seeing it for the first time.”","“Read your sentences out loud.”","“Double-check every date and fact.”","“Revising is optional — publish the first draft.”"], correct:3,
+     answer:"“Revising is optional — publish the first draft.”",
+     why:"Every professional editor treats <b>revision</b> as a required step. The “LEAST likely” answer is the one that skips the process."},
+    {v:400, text:"Hana’s novel is polished and ready. She wants to [ask an editor] to consider working with her on it.",
+     ask:"What should Hana send first?",
+     choices:["her resume","a query letter","a summary of her favorite books","a thank-you card"], correct:1,
+     answer:"A query letter",
+     why:"A <b>query letter</b> is a short, professional letter that pitches your work, and writing one is the <b>best first step to engaging an editor</b>. A resume is for job applications."},
+    {v:500, text:"Felix writes the [step-by-step instructions] that come in the box with a new drone, explaining [how to operate] every button.",
+     ask:"What type of writing is this?",
+     choices:["play writing","ghostwriting","technical writing","copywriting"], correct:2,
+     answer:"Technical writing",
+     why:"<b>Technical writing</b> explains how to use or operate something, such as <b>manuals</b> and step-by-step instructions. Copywriting would try to <i>sell</i> the drone instead."}
+  ]}
+];
+
+const FINAL = {
+  text:"Jordan wants to write for the town newspaper [every week], sharing [her own opinions] in [her personal voice] about high school sports. First she needs to [ask the editor] to consider her writing samples.",
+  ask:"Name BOTH: the job Jordan wants, and what she should send to the editor first.",
+  answer:"Columnist — and a query letter",
+  why:"Writing <b>regularly</b> in a <b>personal voice</b> to comment on issues is what <b>columnists</b> do. A <b>query letter</b> is the <b>best first step to engaging an editor</b>. Teams need both halves to earn the wager."
+};
+
+const COLORS = ["#2DB3C6","#FF6F62","#F5B740","#4FD18B","#A98CFF","#FF8FC8"];
+const DEFAULT_NAMES = ["Team 1","Team 2","Team 3","Team 4","Team 5","Team 6"];
+
+/* ============================================================ */
+let G = null;
+const view = document.getElementById("view");
+let tick = null;
+
+function blankGame(n){
+  return {
+    teams: Array.from({length:n}, (_,i) => ({name:DEFAULT_NAMES[i], color:COLORS[i], score:0})),
+    used:{}, turn:0, timer:45, phase:"setup", wagers:[], finals:[]
+  };
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+async function save(){ if(G) await Store.set(KEY, JSON.stringify(G)); }
+function stopTimer(){ if(tick){ clearInterval(tick); tick = null; } }
+function glossaryHTML(){
+  return '<div class="gloss">' + GLOSSARY.map(g => "<div><b>" + g[0] + "</b>" + g[1] + "</div>").join("") + "</div>";
+}
+
+/* ---------------- setup ---------------- */
+function renderSetup(){
+  stopTimer();
+  G.phase = "setup";
+  const rows = G.teams.map((t,i) =>
+    '<div class="teamedit">' +
+      '<span class="pip" style="background:' + t.color + '"></span>' +
+      '<input value="' + esc(t.name) + '" data-i="' + i + '" maxlength="18" aria-label="Team name">' +
+      (G.teams.length > 2 ? '<button class="kill" data-kill="' + i + '" aria-label="Remove team">×</button>' : "") +
+    "</div>").join("");
+
+  view.innerHTML =
+    '<div class="hero"><h1>Writers’ Room — <em>Unit 8 Challenge</em></h1>' +
+    "<p>A live review board for Revision and Purpose. Share your screen, split students into groups, and work through " +
+    "twenty-five scenario questions on writing careers and the revision process, plus a final wager. You run the board; teams answer out loud or in the chat.</p></div>" +
+
+    '<div class="setup-card"><h2>Teams</h2>' + rows +
+      (G.teams.length < 6 ? '<button class="btn ghost" id="addTeam" style="margin-top:8px">Add a team</button>' : "") +
+    "</div>" +
+
+    '<div class="setup-card"><h2>Answer timer</h2><div class="seg" id="timerSeg">' +
+      [0,30,45,60].map(v => '<button data-t="' + v + '" class="' + (G.timer === v ? "on" : "") + '">' +
+        (v === 0 ? "Off" : v + " seconds") + "</button>").join("") +
+      '</div><p class="hint" style="margin:11px 0 0">The timer is a visual bar only. Nothing happens automatically when it runs out, so you stay in control of the room.</p></div>' +
+
+    '<div class="setup-card"><h2>Key vocabulary — warm-up review</h2>' + glossaryHTML() +
+      '<p class="hint" style="margin:14px 0 0">Every answer on the board traces back to one of these twenty terms or a revision strategy from the unit. ' +
+      "The same list is tucked under the board as a word bank you can open or keep closed.</p></div>" +
+
+    '<div class="setup-card"><h2>How it runs</h2><div class="rules">' +
+      "<b>Turns rotate.</b> The team on the clock picks a square. Answer correctly and they take the points.<br>" +
+      "<b>Clue words light up.</b> When you reveal, the words in the scenario that point to the answer turn green — a quick lesson in reading a quiz question.<br>" +
+      "<b>Misses can be stolen.</b> Flip the “half points” switch before you award, and the stealing team gets half.<br>" +
+      "<b>Nobody got it?</b> Click “No one” — the square still closes and play moves on.<br>" +
+      "<b>Scores are editable.</b> Every team card has − and + buttons for corrections mid-game.<br>" +
+      "<b>Final Round.</b> Once the board is clear, each team wagers up to its own score, then all teams answer one open-response question." +
+    "</div></div>" +
+
+    '<div class="actions"><button class="btn" id="startBtn">Start the game</button>' +
+    '<button class="btn ghost" id="clearBtn">Clear saved game</button></div>';
+
+  view.querySelectorAll(".teamedit input").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const i = +inp.dataset.i;
+      G.teams[i].name = inp.value || DEFAULT_NAMES[i];
+      save();
+    });
+  });
+  view.querySelectorAll("[data-kill]").forEach(b => {
+    b.addEventListener("click", () => { G.teams.splice(+b.dataset.kill,1); if(G.turn >= G.teams.length) G.turn = 0; save(); renderSetup(); });
+  });
+  const add = document.getElementById("addTeam");
+  if(add) add.addEventListener("click", () => {
+    const i = G.teams.length;
+    G.teams.push({name:DEFAULT_NAMES[i], color:COLORS[i], score:0});
+    save(); renderSetup();
+  });
+  view.querySelectorAll("#timerSeg button").forEach(b => {
+    b.addEventListener("click", () => { G.timer = +b.dataset.t; save(); renderSetup(); });
+  });
+  document.getElementById("startBtn").addEventListener("click", () => { renderBoard(); });
+  document.getElementById("clearBtn").addEventListener("click", async () => {
+    G = blankGame(3); await save(); renderSetup();
+  });
+}
+
+/* ---------------- shared scoreboard ---------------- */
+function scoreboard(){
+  return '<div class="board-top">' + G.teams.map((t,i) =>
+    '<div class="team' + (i === G.turn && G.phase === "board" ? " up" : "") + '">' +
+      '<div class="team-adj"><button data-adj="' + i + '" data-d="-100" aria-label="Subtract 100">−</button>' +
+      '<button data-adj="' + i + '" data-d="100" aria-label="Add 100">+</button></div>' +
+      '<div class="team-name"><span class="pip" style="background:' + t.color + '"></span>' + esc(t.name) + "</div>" +
+      '<div class="team-score">' + t.score + "</div>" +
+      (i === G.turn && G.phase === "board" ? '<div class="turn-tag">Picks next</div>' : "") +
+    "</div>").join("") + "</div>";
+}
+function wireAdj(){
+  view.querySelectorAll("[data-adj]").forEach(b => {
+    b.addEventListener("click", () => {
+      G.teams[+b.dataset.adj].score += +b.dataset.d;
+      save();
+      const holder = view.querySelector(".board-top");
+      if(holder){ holder.outerHTML = scoreboard(); wireAdj(); }
+    });
+  });
+}
+function remaining(){
+  let n = 0;
+  CATS.forEach((c,ci) => c.qs.forEach((q,qi) => { if(!G.used[ci + "-" + qi]) n++; }));
+  return n;
+}
+
+/* ---------------- board ---------------- */
+function renderBoard(){
+  stopTimer();
+  G.phase = "board";
+  const cells = [];
+  CATS.forEach(c => cells.push('<div class="cat">' + c.name + "</div>"));
+  for(let r = 0; r < 5; r++){
+    CATS.forEach((c,ci) => {
+      const done = !!G.used[ci + "-" + r];
+      cells.push('<button class="cell" data-c="' + ci + '" data-r="' + r + '"' + (done ? " disabled" : "") + ">" +
+        (done ? "—" : c.qs[r].v) + "</button>");
+    });
+  }
+  const left = remaining();
+  view.innerHTML = scoreboard() +
+    '<div class="grid">' + cells.join("") + "</div>" +
+    '<div class="barrow"><span class="hint"><b style="color:' + G.teams[G.turn].color + '">' +
+      esc(G.teams[G.turn].name) + "</b> picks the next square · " + left + " squares left</span>" +
+      '<span style="margin-left:auto"></span>' +
+      '<button class="btn ghost" id="setupBtn">Teams &amp; settings</button>' +
+      '<button class="' + (left === 0 ? "btn gold" : "btn ghost") + '" id="finalBtn">' +
+      (left === 0 ? "Go to the Final Round" : "Skip to the Final Round") + "</button></div>" +
+    '<details class="wordbank setup-card"><summary>Word bank · 20 key terms</summary>' + glossaryHTML() + "</details>";
+
+  wireAdj();
+  view.querySelectorAll(".cell").forEach(b => {
+    if(b.disabled) return;
+    b.addEventListener("click", () => renderQuestion(+b.dataset.c, +b.dataset.r));
+  });
+  document.getElementById("setupBtn").addEventListener("click", renderSetup);
+  document.getElementById("finalBtn").addEventListener("click", startFinal);
+  save();
+}
+
+/* ---------------- question ---------------- */
+function markup(text, revealed){
+  return text.replace(/\[([^\]]+)\]/g, (_, inner) => {
+    const isGap = inner.indexOf("▯") >= 0;
+    if(!revealed) return isGap ? '<span class="gap">▯</span>' : esc(inner);
+    return '<span class="tok hit">' + esc(isGap ? "?" : inner) + "</span>";
+  });
+}
+function choicesHTML(q, revealed){
+  if(!q.choices) return "";
+  return '<div class="choices">' + q.choices.map((c,i) =>
+    '<div class="choice' + (revealed ? (i === q.correct ? " right" : " wrong") : "") + '">' +
+      '<span class="letter">' + "ABCD"[i] + "</span><span>" + esc(c) + "</span></div>").join("") + "</div>";
+}
+
+function renderQuestion(ci, r){
+  stopTimer();
+  G.phase = "question";
+  const cat = CATS[ci], q = cat.qs[r];
+
+  view.innerHTML = scoreboard() +
+    '<div class="qhead"><span class="qcat">' + cat.name + "</span>" +
+      '<span class="qval">' + q.v + "</span>" +
+      '<span class="qturn"><span class="pip" style="background:' + G.teams[G.turn].color + '"></span>' +
+      esc(G.teams[G.turn].name) + " is up</span></div>" +
+    (G.timer ? '<div class="timer"><div class="timer-fill" id="tfill"></div></div>' : "") +
+    '<div class="specimen"><div class="ask">' + q.ask + "</div>" +
+      '<div class="sentence" id="sent">' + markup(q.text, false) + "</div>" +
+      '<div id="choiceBox">' + choicesHTML(q, false) + "</div>" +
+      '<div id="ansBox"></div></div>' +
+    '<div class="actions" id="actionRow"><button class="btn" id="revealBtn">Show the answer</button>' +
+    '<button class="btn ghost" id="backBtn">Back to the board</button>' +
+    '<span class="hint">Press <b>space</b> to reveal</span></div>';
+
+  wireAdj();
+  document.getElementById("backBtn").addEventListener("click", renderBoard);
+  document.getElementById("revealBtn").addEventListener("click", () => reveal(ci, r));
+
+  if(G.timer){
+    let left = G.timer;
+    const fill = document.getElementById("tfill");
+    tick = setInterval(() => {
+      left -= 0.1;
+      const pct = Math.max(0, left / G.timer * 100);
+      fill.style.width = pct + "%";
+      if(pct < 25) fill.classList.add("low");
+      if(left <= 0) stopTimer();
+    }, 100);
+  }
+  save();
+}
+
+function reveal(ci, r){
+  stopTimer();
+  const q = CATS[ci].qs[r];
+  document.getElementById("sent").innerHTML = markup(q.text, true) +
+    (q.text.indexOf("[") >= 0 ? '<div class="clue-note">Clue words highlighted</div>' : "");
+  document.getElementById("choiceBox").innerHTML = choicesHTML(q, true);
+  document.getElementById("ansBox").innerHTML =
+    '<div class="answer"><div class="answer-label">Answer</div>' +
+    '<div class="answer-text">' + q.answer + "</div>" +
+    '<div class="answer-why">' + q.why + "</div></div>";
+
+  const chips = G.teams.map((t,i) =>
+    '<button class="chip" data-team="' + i + '" style="background:' + t.color + '">' + esc(t.name) + "</button>").join("");
+
+  document.getElementById("actionRow").outerHTML =
+    '<div class="award"><div class="award-lead"><span>Who earned it?</span>' +
+      '<label class="toggle"><input type="checkbox" id="halfBox"> Half points (steal)</label></div>' +
+    '<div class="chiprow">' + chips + '<button class="chip none" data-team="-1">No one</button></div>' +
+    '<div class="actions"><button class="btn ghost" id="backBtn2">Back without scoring</button></div></div>';
+
+  document.getElementById("backBtn2").addEventListener("click", renderBoard);
+  view.querySelectorAll("[data-team]").forEach(b => {
+    b.addEventListener("click", () => {
+      const t = +b.dataset.team;
+      if(t >= 0){
+        const half = document.getElementById("halfBox").checked;
+        G.teams[t].score += half ? Math.round(q.v / 2) : q.v;
+      }
+      G.used[ci + "-" + r] = true;
+      G.turn = (G.turn + 1) % G.teams.length;
+      save();
+      renderBoard();
+    });
+  });
+}
+
+/* ---------------- final round ---------------- */
+function startFinal(){
+  stopTimer();
+  G.phase = "wager";
+  G.wagers = G.teams.map(t => Math.max(0, Math.min(t.score, 100)));
+  G.finals = G.teams.map(() => null);
+  save();
+  renderWager();
+}
+
+function renderWager(){
+  G.phase = "wager";
+  const rows = G.teams.map((t,i) =>
+    '<div class="wagerrow"><span class="wagername"><span class="pip" style="background:' + t.color + '"></span>' +
+      esc(t.name) + "</span>" +
+      '<input type="number" min="0" max="' + Math.max(0,t.score) + '" value="' + G.wagers[i] +
+      '" data-w="' + i + '" aria-label="Wager"><span class="hint">of ' + t.score + " available</span></div>").join("");
+
+  view.innerHTML = scoreboard() +
+    '<div class="setup-card"><h2>Final Round — place your wagers</h2>' +
+      '<p class="hint" style="margin:0 0 16px">Each team decides on a wager <b>before</b> seeing the question. ' +
+      "A team can risk anything up to its current score. Teams sitting on zero wager nothing and answer for pride. " +
+      "The category: <b>Careers and Next Steps</b>.</p>" +
+      rows + "</div>" +
+    '<div class="actions"><button class="btn gold" id="goFinal">Wagers are in — show the question</button>' +
+    '<button class="btn ghost" id="backBoard">Back to the board</button></div>';
+
+  wireAdj();
+  view.querySelectorAll("[data-w]").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const i = +inp.dataset.w;
+      let v = parseInt(inp.value, 10);
+      if(isNaN(v) || v < 0) v = 0;
+      if(v > G.teams[i].score) v = Math.max(0, G.teams[i].score);
+      G.wagers[i] = v;
+      save();
+    });
+  });
+  document.getElementById("goFinal").addEventListener("click", () => renderFinal(false));
+  document.getElementById("backBoard").addEventListener("click", renderBoard);
+}
+
+function renderFinal(revealed){
+  G.phase = "final";
+  if(!Array.isArray(G.wagers) || G.wagers.length !== G.teams.length) G.wagers = G.teams.map(() => 0);
+  if(!Array.isArray(G.finals) || G.finals.length !== G.teams.length) G.finals = G.teams.map(() => null);
+  view.innerHTML = scoreboard() +
+    '<div class="qhead"><span class="qcat">Final Round · Careers and Next Steps</span><span class="qval">Wagers locked</span></div>' +
+    '<div class="specimen"><div class="ask">' + FINAL.ask + "</div>" +
+      '<div class="sentence">' + markup(FINAL.text, revealed) +
+        (revealed ? '<div class="clue-note">Clue words highlighted</div>' : "") + "</div>" +
+      (revealed ? '<div class="answer"><div class="answer-label">Answer</div><div class="answer-text">' +
+        FINAL.answer + '</div><div class="answer-why">' + FINAL.why + "</div></div>" : "") +
+    "</div>" +
+    (revealed
+      ? '<div class="setup-card" style="margin-top:18px"><h2>Mark each team</h2>' +
+        G.teams.map((t,i) =>
+          '<div class="wagerrow"><span class="wagername"><span class="pip" style="background:' + t.color + '"></span>' +
+          esc(t.name) + '</span><span class="hint">wagered ' + G.wagers[i] + "</span>" +
+          '<span class="verdict">' +
+            '<button class="yes' + (G.finals[i] === true ? " on" : "") + '" data-f="' + i + '" data-v="1">Correct</button>' +
+            '<button class="no' + (G.finals[i] === false ? " on" : "") + '" data-f="' + i + '" data-v="0">Wrong</button>' +
+          "</span></div>").join("") + "</div>" +
+        '<div class="actions"><button class="btn gold" id="scoreFinal">Score it and show the results</button></div>'
+      : '<div class="actions"><button class="btn" id="revealFinal">Show the answer</button>' +
+        '<button class="btn ghost" id="backWager">Back to wagers</button>' +
+        '<span class="hint">Press <b>space</b> to reveal</span></div>');
+
+  wireAdj();
+  save();
+  if(!revealed){
+    document.getElementById("revealFinal").addEventListener("click", () => renderFinal(true));
+    document.getElementById("backWager").addEventListener("click", renderWager);
+  }else{
+    view.querySelectorAll("[data-f]").forEach(b => {
+      b.addEventListener("click", () => { G.finals[+b.dataset.f] = b.dataset.v === "1"; save(); renderFinal(true); });
+    });
+    document.getElementById("scoreFinal").addEventListener("click", () => {
+      G.teams.forEach((t,i) => {
+        if(G.finals[i] === true) t.score += G.wagers[i];
+        else if(G.finals[i] === false) t.score -= G.wagers[i];
+      });
+      G.phase = "done"; save(); renderDone();
+    });
+  }
+}
+
+function renderDone(){
+  G.phase = "done";
+  const ranked = G.teams.map((t,i) => ({name:t.name, color:t.color, score:t.score})).sort((a,b) => b.score - a.score);
+  const top = ranked[0].score;
+  view.innerHTML =
+    '<div class="hero"><h1>Final <em>scores</em></h1></div>' +
+    '<div class="podium">' + ranked.map((t,k) =>
+      '<div class="place' + (t.score === top ? " first" : "") + '">' +
+        '<div class="place-rank">' + (t.score === top ? "Winner" : "#" + (k+1)) + "</div>" +
+        '<div class="place-name"><span class="pip" style="background:' + t.color +
+        ';display:inline-block;vertical-align:middle;margin-right:7px"></span>' + esc(t.name) + "</div>" +
+        '<div class="place-score">' + t.score + "</div></div>").join("") + "</div>" +
+    '<div class="actions" style="justify-content:center">' +
+      '<button class="btn" id="againBtn">Play again — same teams, scores reset</button>' +
+      '<button class="btn ghost" id="setupBtn2">Teams &amp; settings</button></div>';
+
+  document.getElementById("againBtn").addEventListener("click", () => {
+    G.teams.forEach(t => t.score = 0);
+    G.used = {}; G.turn = 0; G.wagers = []; G.finals = [];
+    save(); renderBoard();
+  });
+  document.getElementById("setupBtn2").addEventListener("click", renderSetup);
+}
+
+/* ---------------- keyboard ---------------- */
+document.addEventListener("keydown", e => {
+  if(e.code !== "Space" && e.code !== "Enter") return;
+  const tag = document.activeElement ? document.activeElement.tagName : "";
+  if(tag === "INPUT" || tag === "TEXTAREA" || tag === "SUMMARY") return;
+  const r = document.getElementById("revealBtn") || document.getElementById("revealFinal");
+  if(r){ e.preventDefault(); r.click(); }
+});
+
+/* ---------------- boot ---------------- */
+(async function(){
+  const raw = await Store.get(KEY);
+  if(raw){
+    try{
+      const parsed = JSON.parse(raw);
+      G = (parsed && Array.isArray(parsed.teams) && parsed.teams.length >= 2) ? parsed : blankGame(3);
+    }catch(e){ G = blankGame(3); }
+  }else{
+    G = blankGame(3);
+  }
+  if(!G.used) G.used = {};
+  if(typeof G.turn !== "number" || G.turn >= G.teams.length) G.turn = 0;
+  if(G.phase === "board") renderBoard();
+  else if(G.phase === "question") renderBoard();
+  else if(G.phase === "wager") renderWager();
+  else if(G.phase === "final") renderFinal(false);
+  else if(G.phase === "done") renderDone();
+  else renderSetup();
+})();
+</script>
+</body>
+</html>
